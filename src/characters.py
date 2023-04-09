@@ -1,4 +1,5 @@
 import points as pt
+from time import time
 import collections
 from graph import moveWithoutBreakingWalls
 
@@ -6,11 +7,13 @@ barbarians = []
 dragons = []
 balloons = []
 archers = []
+healers = []
 
 troops_spawned = {
     'barbarian': 0,
     'archer': 0,
     'dragon': 0,
+    'healer': 0,
     'balloon': 0
 }
 
@@ -20,15 +23,18 @@ def clearTroops():
     dragons.clear()
     balloons.clear()
     archers.clear()
+    healers.clear()
     troops_spawned['barbarian'] = 0
     troops_spawned['dragon'] = 0
     troops_spawned['balloon'] = 0
     troops_spawned['archer'] = 0
+    troops_spawned['healer'] = 0
 
 
 class Barbarian:
     def __init__(self, position):
         self.speed = 1
+        self.invis_time = 0
         self.health = 100
         self.max_health = 100
         self.attack = 1
@@ -206,10 +212,11 @@ class Barbarian:
 class Archer:
     def __init__(self, position):
         self.speed = 1
+        self.invis_time = 0
         self.health = 100
         self.max_health = 100
         self.attack = 1
-        self.attack_radius = 6
+        self.attack_radius = 3
         self.position = position
         self.alive = True
         self.target = None
@@ -222,6 +229,9 @@ class Archer:
         return False
 
     def move(self, pos, V, type):
+        if (self.invis_time > 0):
+            if (time() - self.invis_time) >= 10:
+                self.invis_time = 0
         if(self.alive == False):
             return
         vmap = V.map
@@ -380,9 +390,17 @@ class Archer:
             self.health = self.max_health
 
 
+class Stealth_Archer(Archer):
+    def __init__(self, position):
+        Archer.__init__(self, position)
+
+        self.invis_time = time()
+
+
 class Dragon:
     def __init__(self, position):
         self.speed = 1
+        self.invis_time = 0
         self.health = 100
         self.max_health = 100
         self.attack = 5
@@ -505,6 +523,7 @@ class Dragon:
 class Balloon:
     def __init__(self, position):
         self.speed = 2
+        self.invis_time = 0
         self.health = 100
         self.max_health = 100
         self.attack = 2
@@ -618,6 +637,86 @@ class Balloon:
             self.health = self.max_health
 
 
+class Healer:
+    def __init__(self, position):
+        self.speed = 1
+        self.invis_time = 0
+        self.health = 250
+        self.max_health = 250
+        self.heal_radius = 1
+        self.range = 7
+        self.heal_amount = 20
+        self.position = position
+        self.alive = True
+        
+
+    def isInRange(self,pos):
+        r = abs(pos[0] - self.position[0])
+        c = abs(pos[1] - self.position[1])
+        if(r**2 + c**2 <= self.range**2):
+            return True
+        return False
+
+    def move(self, troop, V):
+        if(self.alive == False):
+            return
+        vmap = V.map
+        pos = troop.position
+        r = abs(pos[0] - self.position[0])
+        c = abs(pos[1] - self.position[1])
+        if (self.isInRange(pos)):
+            self.heal(troop.position)
+            return
+        else:
+            if (r>c):
+                if (pos[0] > self.position[0]):
+                    self.position[0] += self.speed
+                else:
+                    self.position[0] -= self.speed
+            else:
+                if (pos[1] > self.position[1]):
+                    self.position[1] += self.speed
+                else:
+                    self.position[1] -= self.speed
+
+    def heal(self, position):
+        if(self.alive == False):
+            return
+        troops = barbarians + archers + balloons + dragons
+        for troop in troops:
+         if abs(troop.position[1] - position[1]) <= 1:
+            troop.health += self.heal_amount
+            if troop.health > troop.max_health:
+                troop.health = troop.max_health
+         if abs(troop.position[0] - position[0]) <= 1:
+            troop.health += self.heal_amount
+            if troop.health > troop.max_health:
+                troop.health = troop.max_health
+         else:
+             continue
+
+    def kill(self):
+        self.alive = False
+        balloons.remove(self)
+
+    def deal_damage(self, hit):
+        if(self.alive == False):
+            return
+        self.health -= hit
+        if self.health <= 0:
+            self.health = 0
+            self.kill()
+
+    def rage_effect(self):
+        self.speed = self.speed*2
+        self.heal_amount = self.heal_amount*2
+
+    def heal_effect(self):
+        self.health = self.health*1.5
+        if self.health > self.max_health:
+            self.health = self.max_health
+
+
 def spawnBarbarian(pos):
     if(pt.troop_limit['barbarian'] <= troops_spawned['barbarian']):
         return
@@ -635,6 +734,16 @@ def spawnArcher(pos):
     # convert tuple to list
     pos = list(pos)
     archer = Archer(pos)
+    troops_spawned['archer'] += 1
+    archers.append(archer)
+
+def spawnS_Archer(pos):
+    if(pt.troop_limit['archer'] <= troops_spawned['archer']):
+        return
+
+    # convert tuple to list
+    pos = list(pos)
+    archer = Stealth_Archer(pos)
     troops_spawned['archer'] += 1
     archers.append(archer)
 
@@ -657,6 +766,16 @@ def spawnBalloon(pos):
     bal = Balloon(pos)
     troops_spawned['balloon'] += 1
     balloons.append(bal)
+
+def spawnHealer(pos):
+    if(pt.troop_limit['healer'] <= troops_spawned['healer']):
+        return
+
+    # convert tuple to list
+    pos = list(pos)
+    heal = Healer(pos)
+    troops_spawned['healer'] += 1
+    healers.append(heal)
 
 def move_barbarians(V,type):
     if(type == 1):
@@ -720,6 +839,29 @@ def move_balloons(V):
         if(closest_building == None):
             continue
         bal.move(closest_building, V)
+
+def move_healers(V):
+    for healer in healers:
+        if(healer.alive == False):
+            continue
+        closest_ally = search_for_closest_damaged_ally(healer.position)
+        if(closest_ally == None):
+            continue
+        healer.move(closest_ally, V)
+
+def search_for_closest_damaged_ally(pos):
+    closest_ally = None
+    closest_dist = 10000
+    troops = barbarians + archers + balloons + dragons + healers
+    for troop in troops:
+        if troop.health < troop.max_health:
+            dist = (pos[0] - troop.position[0])*2 + (pos[1] - troop.position[1])* 2
+            if dist < closest_dist:
+                closest_ally = troop
+        else:
+            continue
+    
+    return closest_ally
 
 def search_for_closest_building(pos, vmap, prioritized):
     closest_building = None

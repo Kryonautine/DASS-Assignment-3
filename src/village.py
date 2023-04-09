@@ -2,7 +2,7 @@ import numpy as np
 import points as pt
 import buildings as bd
 import collections
-from characters import barbarians, dragons,balloons, archers
+from characters import barbarians, dragons,balloons, archers, healers
 
 
 class Village:

@@ -4,7 +4,7 @@ init(autoreset=True)
 import points as pt
 import numpy as np
 import datetime
-from characters import barbarians, dragons, balloons, archers
+from characters import barbarians, dragons, balloons, archers, healers
 
 # 50 - 100 : cyan
 # 20 - 50 : yellow
@@ -69,6 +69,17 @@ def drColor(dr):
         return Back.MAGENTA
     elif percentage > 20:
         return Back.BLUE
+    else:
+        return Back.WHITE
+
+def hlColor(hl):
+    health = hl.health
+    max_health = hl.max_health
+    percentage = (health*100)/max_health
+    if(percentage > 50):
+        return Back.LIGHTGREEN_EX
+    elif percentage > 20:
+        return Back.YELLOW
     else:
         return Back.WHITE
 
@@ -265,11 +276,16 @@ def printMap(V):
     for arch in archers:
         a= 2*arch.position[0]
         b = 2*arch.position[1]
-        map_matrix[a][b] = archColor(arch) + Fore.BLACK + 'AR'
-        map_matrix[a+1][b] = archColor(arch) + Fore.BLACK + '  '
-        map_matrix[a][b+1] = archColor(arch) + Fore.BLACK + 'CH'
-        map_matrix[a+1][b+1] = archColor(arch) + Fore.BLACK + 'ER'
-    
+        if arch.invis_time > 0:
+            map_matrix[a][b] = archColor(arch) + Fore.BLACK + 'ST'
+            map_matrix[a+1][b] = archColor(arch) + Fore.BLACK + 'AR'
+            map_matrix[a][b+1] = archColor(arch) + Fore.BLACK + 'CH'
+            map_matrix[a+1][b+1] = archColor(arch) + Fore.BLACK + 'ER'
+        else:
+            map_matrix[a][b] = archColor(arch) + Fore.BLACK + 'AR'
+            map_matrix[a+1][b] = archColor(arch) + Fore.BLACK + '  '
+            map_matrix[a][b+1] = archColor(arch) + Fore.BLACK + 'CH'
+            map_matrix[a+1][b+1] = archColor(arch) + Fore.BLACK + 'ER'
 
     for dr in dragons:
         a= 2*dr.position[0]
@@ -278,6 +294,14 @@ def printMap(V):
         map_matrix[a+1][b] = drColor(dr) + Fore.BLACK + 'ON'
         map_matrix[a][b+1] = drColor(dr) + Fore.BLACK + 'AG'
         map_matrix[a+1][b+1] = drColor(dr) + Fore.BLACK + '  '
+
+    for hl in healers:
+        a= 2*hl.position[0]
+        b = 2*hl.position[1]
+        map_matrix[a][b] = hlColor(hl) + Fore.BLACK + 'HE'
+        map_matrix[a+1][b] = hlColor(hl) + Fore.BLACK + 'ER'
+        map_matrix[a][b+1] = hlColor(hl) + Fore.BLACK + 'AL'
+        map_matrix[a+1][b+1] = hlColor(hl) + Fore.BLACK + '  '
     
     for bl in balloons:
         a= 2*bl.position[0]

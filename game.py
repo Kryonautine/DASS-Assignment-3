@@ -7,7 +7,7 @@ import get_input
 import village
 import king
 from map import printMap, showKingHealth, update_map
-from characters import spawnBarbarian, move_barbarians, spawnArcher, move_archers, spawnDragon, move_dragons, spawnBalloon, move_balloons, clearTroops
+from characters import spawnBarbarian, move_barbarians, spawnArcher, spawnS_Archer, move_archers, spawnDragon, move_dragons, spawnBalloon, move_balloons, spawnHealer, move_healers, clearTroops
 from buildings import shoot_cannons, shoot_wizard_towers
 from spells import rage_spell, heal_spell
 import points as pt
@@ -131,12 +131,25 @@ while(True):
         spawnArcher(V.spawn_points[1])
     elif ch == 'p':
         spawnArcher(V.spawn_points[2])
+    elif ch == 't':
+        spawnS_Archer(V.spawn_points[0])
+    elif ch == 'y':
+        spawnS_Archer(V.spawn_points[1])
+    elif ch == 'u':
+        spawnS_Archer(V.spawn_points[2])
+    elif ch == 'f':
+        spawnHealer(V.spawn_points[0])
+    elif ch == 'g':
+        spawnHealer(V.spawn_points[1])
+    elif ch == 'h':
+        spawnHealer(V.spawn_points[2])
     elif ch == 'q':
         print('quit')
         break
     # os.system('clear')
     move_barbarians(V,pt.movement)
     move_archers(V,pt.movement)
+    move_healers(V)
     move_dragons(V)
     move_balloons(V)
     shoot_cannons(King, V)

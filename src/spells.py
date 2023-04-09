@@ -1,4 +1,4 @@
-from characters import barbarians, dragons, balloons, archers
+from characters import barbarians, dragons, balloons, archers, healers
 
 
 def rage_spell(King):
@@ -16,6 +16,9 @@ def rage_spell(King):
     for bl in balloons:
         if bl.alive == True:
             bl.rage_effect()
+    for hl in healers:
+        if hl.alive == True:
+            hl.rage_effect()
 
 def heal_spell(King):
     if King.alive == True:
@@ -32,3 +35,6 @@ def heal_spell(King):
     for bl in balloons:
         if bl.alive == True:
             bl.heal_effect()
+    for hl in healers:
+        if hl.alive == True:
+            hl.heal_effect()
